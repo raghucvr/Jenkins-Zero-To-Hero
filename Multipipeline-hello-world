@@ -1,0 +1,60 @@
+pipeline {
+    agent none
+
+    stages {
+        stage('Back-end') {
+            agent {
+                docker { image 'maven:3.8.1-adoptopenjdk-11' }
+            }
+            steps {
+                sh 'mvn --version'
+
+                script {
+                    // Java Hello, World!
+                    writeFile file: 'src/main/java/HelloWorld.java', text: '''
+                    public class HelloWorld {
+                        public static void main(String[] args) {
+                            System.out.println("Hello, World from Java!");
+                        }
+                    }
+                    '''
+                    
+                    sh 'mvn clean install'
+                }
+            }
+        }
+
+        stage('Front-end') {
+            agent {
+                docker { image 'node:16-alpine' }
+            }
+            steps {
+                sh 'node --version'
+
+                script {
+                    // Node.js Hello, World!
+                    writeFile file: 'index.js', text: '''
+                    console.log('Hello, World from Node.js!');
+                    '''
+                    
+                    sh 'npm init -y'
+                    sh 'npm install express'
+                    writeFile file: 'app.js', text: '''
+                    const express = require('express');
+                    const app = express();
+                    const port = 3000;
+
+                    app.get('/', (req, res) => {
+                        res.send('Hello, World from Node.js!');
+                    });
+
+                    app.listen(port, () => {
+                        console.log(`Server is running at http://localhost:${port}`);
+                    });
+                    '''
+                    sh 'npm start'
+                }
+            }
+        }
+    }
+}
